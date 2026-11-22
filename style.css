@@ -11,7 +11,7 @@ canvas {
   cursor: crosshair;
 }
 
-#download {
-  display: inline-block;
+#save {
+  display: block;
   margin-top: 8px;
 }
