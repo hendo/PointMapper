@@ -1,0 +1,17 @@
+body {
+  margin: 0;
+  background: white;
+}
+
+canvas {
+  display: block;
+  width: 1024px;
+  height: 768px;
+  background: black;
+  cursor: crosshair;
+}
+
+#download {
+  display: inline-block;
+  margin-top: 8px;
+}
