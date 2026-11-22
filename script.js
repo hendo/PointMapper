@@ -1,9 +1,17 @@
 const canvas = document.getElementById("canvas");
 const context = canvas.getContext("2d");
 const saveButton = document.getElementById("save");
-
-const points = [];
 const radius = 2;
+
+const points = (Array.isArray(window.pointsData) ? window.pointsData : [])
+  .filter((point) =>
+    point &&
+    Number.isFinite(point.x) &&
+    Number.isFinite(point.y) &&
+    point.x >= 0 && point.x <= canvas.width &&
+    point.y >= 0 && point.y <= canvas.height
+  )
+  .map(({ x, y }) => ({ x, y }));
 
 function drawPoints() {
   context.clearRect(0, 0, canvas.width, canvas.height);
@@ -13,38 +21,6 @@ function drawPoints() {
     context.beginPath();
     context.arc(point.x, point.y, radius, 0, Math.PI * 2);
     context.fill();
-  }
-}
-
-async function loadPoints() {
-  try {
-    const response = await fetch("points.csv", { cache: "no-store" });
-    if (!response.ok) return;
-
-    const csv = await response.text();
-    const lines = csv.split(/\r?\n/).filter((line) => line.trim() !== "");
-    const firstLine = lines[0]?.trim().toLowerCase();
-    const dataLines = firstLine === "x,y" ? lines.slice(1) : lines;
-
-    for (const line of dataLines) {
-      const [xText, yText] = line.split(",");
-      const x = Number(xText?.trim());
-      const y = Number(yText?.trim());
-
-      if (
-        Number.isFinite(x) &&
-        Number.isFinite(y) &&
-        x >= 0 && x <= canvas.width &&
-        y >= 0 && y <= canvas.height
-      ) {
-        points.push({ x, y });
-      }
-    }
-
-    drawPoints();
-  } catch (error) {
-    // The CSV may be absent, or the page may be opened from file://.
-    // In either case, start with an empty point list.
   }
 }
 
@@ -69,17 +45,16 @@ canvas.addEventListener("click", (event) => {
 });
 
 saveButton.addEventListener("click", () => {
-  const rows = ["x,y", ...points.map(({ x, y }) => `${x},${y}`)];
-  const csv = new Blob([rows.join("\n")], { type: "text/csv;charset=utf-8" });
-  const url = URL.createObjectURL(csv);
+  const fileContent = `window.pointsData = ${JSON.stringify(points, null, 2)};\n`;
+  const file = new Blob([fileContent], { type: "text/javascript;charset=utf-8" });
+  const url = URL.createObjectURL(file);
   const temporaryLink = document.createElement("a");
 
   temporaryLink.href = url;
-  temporaryLink.download = "points.csv";
+  temporaryLink.download = "points.js";
   temporaryLink.click();
 
   URL.revokeObjectURL(url);
 });
 
 drawPoints();
-loadPoints();
